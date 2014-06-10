@@ -17,7 +17,7 @@ namespace TwitterFeed
 {
     public partial class TwitterFeed : Form
     {
- 
+
         private long? lastTweetId;
         private IDisposable subscription;
         private TwitterService service;
@@ -31,39 +31,39 @@ namespace TwitterFeed
             service = TwitterServiceFactory.create();
             Observable.FromEventPattern(this.btnSearch, "Click")
                 .Subscribe(
-                   args => { 
-                    if (string.IsNullOrWhiteSpace(txtFind.Text)) return;
-                    txtFeed.Text = "";
-                    int retweetCount = getRetweetCount();
-                    searchTweets(txtFind.Text, txtTag.Text, retweetCount);
+                   args =>
+                   {
+                       if (string.IsNullOrWhiteSpace(txtFind.Text)) return;
+                       txtFeed.Text = "";
+                       long retweetCount = getRetweetCount();
+                       searchTweets(txtFind.Text, txtTag.Text, retweetCount);
                    }
                 );
         }
 
-        private int getRetweetCount()
+        private long getRetweetCount()
         {
-            int count = 0;
-            int.TryParse(txtRetweetCount.Text,out count);
+            long count = 0;
+            long.TryParse(txtRetweetCount.Text, out count);
             return count;
         }
 
-        private void searchTweets(string handle, string tag, int retweetCount = 0)
+        private void searchTweets(string handle, string tag, long retweetCount = 0)
         {
+
             if (subscription != null)
             {
                 subscription.Dispose();
             }
             SearchOptions options = new SearchOptions();
             options.Q = handle;
-            options.Count = 8;
+            options.Count = 10;
             options.Lang = "en";
             options.SinceId = lastTweetId;
-            service.Search(options);
-
             subscription =
-            Observable.Interval(TimeSpan.FromSeconds(5))
+            Observable.Interval(TimeSpan.FromSeconds(2))
                 .Select(ticks => service.Search(options))
-                .SelectMany(response => response.Statuses)                
+                .SelectMany(response => response.Statuses)
                 .Where(x => x.HasHashTag(tag))
                 .Where(x => x.RetweetCount > retweetCount)
                 .Subscribe(

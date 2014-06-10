@@ -8,6 +8,7 @@ using System.Reactive.Subjects;
 using System.Reactive.Linq;
 using System.Threading;
 using System.IO;
+using System.Reactive.Disposables;
 
 namespace ReactiveConsole
 {
@@ -16,12 +17,43 @@ namespace ReactiveConsole
         public static void Main (string[] args)
         {
             //observableListExamples ();
-            observableSourcesWithRuntimeErrors ();
+            //observableSourcesWithRuntimeErrors ();
             //observableTimerExamples ();
             //coldObservables ();
             //hotObservables ();
             //subjectTest ();
             //proxySubject ();
+            test();
+        }
+
+        private static void test()
+        {
+            var observable =
+                Observable.Create<string>((susbcriber) =>
+                {
+                    Console.WriteLine("about to hit onNext()");
+                    susbcriber.OnNext("abcd");
+                    susbcriber.OnNext("defg");
+                    susbcriber.OnNext("hijk");
+                    susbcriber.OnNext("lmop"); 
+                    susbcriber.OnCompleted();
+                    return () =>
+                    {
+                        Console.WriteLine("Observer has unsubscribed");
+                    };
+                });
+
+            var subscription = observable.Subscribe(
+                str =>
+                {
+                    Console.Write(str);
+                    Console.ReadLine();
+                },
+                ex => { },
+                () => Console.WriteLine("Done")
+            );
+            subscription.Dispose();
+            Console.ReadLine();
         }
 
         private static void proxySubject() {
