@@ -11,6 +11,8 @@ using System.Reactive;
 using System.Reactive.Linq;
 using RestSharp;
 using TweetSharp;
+using System.Reactive.Concurrency;
+using System.Threading;
 namespace TwitterFeed
 {
     public partial class TwitterFeed : Form
@@ -27,22 +29,33 @@ namespace TwitterFeed
         private void TwitterFeed_Load(object sender, EventArgs e)
         {
             service = TwitterServiceFactory.create();
+            Observable.FromEventPattern(this.btnSearch, "Click")
+                .Subscribe(
+                   args => { 
+                    if (string.IsNullOrWhiteSpace(txtFind.Text)) return;
+                    txtFeed.Text = "";
+                    int retweetCount = getRetweetCount();
+                    searchTweets(txtFind.Text, txtTag.Text, retweetCount);
+                   }
+                );
         }
 
-        private void btnSearch_Click(object sender, EventArgs e)
+        private int getRetweetCount()
         {
-            if (string.IsNullOrWhiteSpace(txtFind.Text)) return;
+            int count = 0;
+            int.TryParse(txtRetweetCount.Text,out count);
+            return count;
+        }
+
+        private void searchTweets(string handle, string tag, int retweetCount = 0)
+        {
             if (subscription != null)
+            {
                 subscription.Dispose();
-            txtFeed.Text = "";
-            searchTweets(txtFind.Text);
-        }
-
-        private void searchTweets(string searchTerm)
-        {
+            }
             SearchOptions options = new SearchOptions();
-            options.Q = searchTerm;
-            options.Count = 3;
+            options.Q = handle;
+            options.Count = 8;
             options.Lang = "en";
             options.SinceId = lastTweetId;
             service.Search(options);
@@ -50,20 +63,18 @@ namespace TwitterFeed
             subscription =
             Observable.Interval(TimeSpan.FromSeconds(5))
                 .Select(ticks => service.Search(options))
-                .Select(response => response.Statuses)
+                .SelectMany(response => response.Statuses)                
+                .Where(x => x.HasHashTag(tag))
+                .Where(x => x.RetweetCount > retweetCount)
                 .Subscribe(
-                    statuses =>
+                    status =>
                     {
                         this.Invoke((MethodInvoker)delegate
                         {
-                            if (statuses.Count() == 0) return;
-                            options.SinceId = statuses.Last().Id;
-                            foreach (var status in statuses)
-                            {
-                                txtFeed.Text =
-                                    string.Format("\n{0}\n\n{1}",
-                                        status.Text, txtFeed.Text);
-                            }
+                            options.SinceId = status.Id;
+                            txtFeed.Text =
+                                string.Format("\r\nTweet:{0}\r\nRetweetCount:{1}\r\n\r\n{2}",
+                                    status.Text, status.RetweetCount, txtFeed.Text);
                         });
                     },
                     ex =>
