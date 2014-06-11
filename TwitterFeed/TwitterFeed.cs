@@ -63,7 +63,8 @@ namespace TwitterFeed
             subscription =
             Observable.Interval(TimeSpan.FromSeconds(2))
                 .Select(ticks => service.Search(options))
-                .SelectMany(response => response.Statuses)
+                //.SelectMany(response => response.Statuses)
+                .SelectMany(response => response != null ? response.Statuses : new List<TwitterStatus>())
                 .Where(x => x.HasHashTag(tag))
                 .Where(x => x.RetweetCount > retweetCount)
                 .Subscribe(

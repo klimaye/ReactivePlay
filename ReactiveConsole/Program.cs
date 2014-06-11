@@ -24,7 +24,7 @@ namespace ReactiveConsole
         }
         public void OnCompleted()
         {
-            Console.WriteLine("Sequence terminated");
+            Console.WriteLine("Sequence complete!");
         }
     }
 
@@ -34,11 +34,11 @@ namespace ReactiveConsole
         {
             Console.WriteLine("about to emit/push values");
             observer.OnNext("abcd");
-            Thread.Sleep(1000);
+            Thread.Sleep(3000);
             observer.OnNext("efgh");
-            Thread.Sleep(1000);
+            Thread.Sleep(3000);
             observer.OnNext("ijkl");
-            Thread.Sleep(1000);
+            Thread.Sleep(3000);
             observer.OnCompleted();
             return Disposable.Empty;
         }
@@ -49,19 +49,36 @@ namespace ReactiveConsole
     {
         public static void Main (string[] args)
         {
+            //blocking 
             var observable = new ConsoleObservable();
             var observer = new ConsoleObserver<string>();
             var subscription = observable.Subscribe(observer);
             subscription.Dispose();
             Console.WriteLine("Bye bye");
+            Console.ReadKey(); 
+
+            //non blocking
+            Console.WriteLine("one liner");
+            var source = Observable.Interval(TimeSpan.FromSeconds(1));
+            var sub = source.Subscribe(
+               x => Console.WriteLine(x),
+               ex => Console.WriteLine("error"),
+               () => Console.WriteLine("done")
+               );
+            Console.WriteLine("one liner");
+            Console.ReadKey();
+            sub.Dispose();
+            Console.WriteLine("sequence stopped");
+            Console.ReadLine();
+
             //createObservableTest();
             //observableListExamples ();
             //observableSourcesWithRuntimeErrors ();
             //observableTimerExamples ();
-            Console.WriteLine("cold observable");
-            coldObservables ();
-            Console.WriteLine("hot observable");
-            hotObservables();
+            //Console.WriteLine("cold observable");
+            //coldObservables ();
+            //Console.WriteLine("hot observable");
+            //hotObservables();
             //subjectTest ();
             //proxySubject ();
         }

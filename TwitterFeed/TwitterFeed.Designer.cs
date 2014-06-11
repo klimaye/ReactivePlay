@@ -65,7 +65,7 @@
             this.txtFind.Name = "txtFind";
             this.txtFind.Size = new System.Drawing.Size(90, 20);
             this.txtFind.TabIndex = 3;
-            this.txtFind.Text = "ubisoft";
+            this.txtFind.Text = "e3";
             // 
             // txtTag
             // 
@@ -74,7 +74,6 @@
             this.txtTag.Name = "txtTag";
             this.txtTag.Size = new System.Drawing.Size(90, 20);
             this.txtTag.TabIndex = 4;
-            this.txtTag.Text = "e3";
             // 
             // label1
             // 
