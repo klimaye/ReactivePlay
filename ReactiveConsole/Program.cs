@@ -12,21 +12,61 @@ using System.Reactive.Disposables;
 
 namespace ReactiveConsole
 {
+    internal class ConsoleObserver<T> : IObserver<T>
+    {
+        public void OnNext(T value)
+        {
+            Console.WriteLine("Received value {0}", value);
+        }
+        public void OnError(Exception error)
+        {
+            Console.WriteLine("Sequence faulted with {0}", error);
+        }
+        public void OnCompleted()
+        {
+            Console.WriteLine("Sequence terminated");
+        }
+    }
+
+    internal class ConsoleObservable : IObservable<string>
+    {
+        public IDisposable Subscribe(IObserver<string> observer)
+        {
+            Console.WriteLine("about to emit/push values");
+            observer.OnNext("abcd");
+            Thread.Sleep(1000);
+            observer.OnNext("efgh");
+            Thread.Sleep(1000);
+            observer.OnNext("ijkl");
+            Thread.Sleep(1000);
+            observer.OnCompleted();
+            return Disposable.Empty;
+        }
+    }
+
+
     public class ReactiveConsole
     {
         public static void Main (string[] args)
         {
+            var observable = new ConsoleObservable();
+            var observer = new ConsoleObserver<string>();
+            var subscription = observable.Subscribe(observer);
+            subscription.Dispose();
+            Console.WriteLine("Bye bye");
+            //createObservableTest();
             //observableListExamples ();
             //observableSourcesWithRuntimeErrors ();
             //observableTimerExamples ();
-            //coldObservables ();
-            //hotObservables ();
+            Console.WriteLine("cold observable");
+            coldObservables ();
+            Console.WriteLine("hot observable");
+            hotObservables();
             //subjectTest ();
             //proxySubject ();
-            test();
         }
 
-        private static void test()
+        private static void createObservableTest()
         {
             var observable =
                 Observable.Create<string>((susbcriber) =>
@@ -120,7 +160,7 @@ namespace ReactiveConsole
                 x => Console.WriteLine("Observer 1: OnNext: {0}", x),
                 ex => Console.WriteLine("Observer 1: OnError: {0}", ex.Message),
                 () => Console.WriteLine("Observer 1: OnCompleted"));
-            Thread.Sleep(3000);  //idle for 3 seconds
+            Thread.Sleep(5000);  //idle for 5 seconds
             IDisposable subscription2 = source.Subscribe(
                 x => Console.WriteLine("Observer 2: OnNext: {0}", x),
                 ex => Console.WriteLine("Observer 2: OnError: {0}", ex.Message),
